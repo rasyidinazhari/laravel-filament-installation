@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laravel Filament - Dashboard & CRUD Admin Panel</title>
+    <meta name="description" content="Modul Praktikum Laravel 13 - Pertemuan 15: Laravel Filament Dashboard dan CRUD Admin Panel untuk Sistem Informasi Akademik">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS RESET & VARIABLES
+           ============================================ */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-secondary: #12122a;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-hover: rgba(255, 255, 255, 0.1);
+            --text-primary: #f0f0ff;
+            --text-secondary: rgba(240, 240, 255, 0.7);
+            --text-muted: rgba(240, 240, 255, 0.45);
+            --accent-1: #6c63ff;
+            --accent-2: #ff6b9d;
+            --accent-3: #00d4aa;
+            --accent-4: #ffd166;
+            --accent-5: #45b7ff;
+            --gradient-1: linear-gradient(135deg, #6c63ff, #ff6b9d);
+            --gradient-2: linear-gradient(135deg, #00d4aa, #45b7ff);
+            --gradient-3: linear-gradient(135deg, #ff6b9d, #ffd166);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+            --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 40px rgba(108, 99, 255, 0.15);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============================================
+           ANIMATED BACKGROUND
+           ============================================ */
+        .bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb:nth-child(1) {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, #6c63ff, transparent);
+            top: -10%; left: -5%;
+            animation-duration: 25s;
+        }
+        .bg-orb:nth-child(2) {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, #ff6b9d, transparent);
+            bottom: -15%; right: -10%;
+            animation-duration: 30s;
+            animation-delay: -5s;
+        }
+        .bg-orb:nth-child(3) {
+            width: 350px; height: 350px;
+            background: radial-gradient(circle, #00d4aa, transparent);
+            top: 40%; left: 60%;
+            animation-duration: 22s;
+            animation-delay: -10s;
+        }
+        .bg-orb:nth-child(4) {
+            width: 300px; height: 300px;
+            background: radial-gradient(circle, #ffd166, transparent);
+            top: 60%; left: 20%;
+            animation-duration: 28s;
+            animation-delay: -15s;
+            opacity: 0.25;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -40px) scale(1.05); }
+            50% { transform: translate(-20px, 30px) scale(0.95); }
+            75% { transform: translate(40px, 20px) scale(1.02); }
+        }
+
+        /* ============================================
+           PROGRESS BAR
+           ============================================ */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            z-index: 1000;
+            transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 0 10px rgba(108, 99, 255, 0.5);
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        .nav-bar {
+            position: fixed;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 20px;
+            background: rgba(10, 10, 26, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+        }
+
+        .nav-logo {
+            font-weight: 800;
+            font-size: 14px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 20px;
+            background: var(--glass-border);
+        }
+
+        .nav-slide-info {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 6px;
+        }
+
+        .nav-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .nav-btn:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-1);
+        }
+
+        /* ============================================
+           SLIDE CONTAINER
+           ============================================ */
+        .slides-wrapper {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 60px 40px;
+            opacity: 0;
+            transform: translateX(60px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+            visibility: visible;
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            transform: translateX(-60px);
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(108,99,255,0.3) transparent;
+        }
+
+        .slide-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .slide-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .slide-content::-webkit-scrollbar-thumb {
+            background: rgba(108,99,255,0.3);
+            border-radius: 4px;
+        }
+
+        /* ============================================
+           GLASS CARD
+           ============================================ */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-glass);
+            transition: var(--transition);
+        }
+
+        .glass:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            box-shadow: var(--shadow-glass), var(--shadow-glow);
+        }
+
+        .glass-sm {
+            padding: 24px;
+            border-radius: var(--radius-md);
+        }
+
+        .glass-xs {
+            padding: 16px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* ============================================
+           TYPOGRAPHY
+           ============================================ */
+        .slide-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-1);
+            margin-bottom: 16px;
+        }
+
+        .slide-label::before {
+            content: '';
+            width: 20px;
+            height: 2px;
+            background: var(--gradient-1);
+            border-radius: 2px;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .gradient-text {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-text-2 {
+            background: var(--gradient-2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-text-3 {
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 600px;
+        }
+
+        /* ============================================
+           GRID LAYOUTS
+           ============================================ */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .flex-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* ============================================
+           LIST STYLES
+           ============================================ */
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .feature-list li .icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin-top: 2px;
+        }
+
+        .icon-purple { background: rgba(108, 99, 255, 0.2); color: var(--accent-1); }
+        .icon-pink { background: rgba(255, 107, 157, 0.2); color: var(--accent-2); }
+        .icon-green { background: rgba(0, 212, 170, 0.2); color: var(--accent-3); }
+        .icon-yellow { background: rgba(255, 209, 102, 0.2); color: var(--accent-4); }
+        .icon-blue { background: rgba(69, 183, 255, 0.2); color: var(--accent-5); }
+
+        /* ============================================
+           CODE BLOCKS
+           ============================================ */
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .code-dot:nth-child(1) { background: #ff5f57; }
+        .code-dot:nth-child(2) { background: #ffbd2e; }
+        .code-dot:nth-child(3) { background: #28c840; }
+
+        .code-lang {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-body {
+            padding: 16px 20px;
+            overflow-x: auto;
+        }
+
+        .code-body code {
+            font-family: var(--font-mono);
+            white-space: pre;
+        }
+
+        /* Syntax Highlighting */
+        .kw { color: #c792ea; }       /* keywords */
+        .fn { color: #82aaff; }       /* functions */
+        .str { color: #c3e88d; }      /* strings */
+        .cm { color: #546e7a; }       /* comments */
+        .var { color: #f78c6c; }      /* variables */
+        .op { color: #89ddff; }       /* operators */
+        .cls { color: #ffcb6b; }      /* classes */
+        .prop { color: #80cbc4; }     /* properties */
+        .num { color: #f78c6c; }      /* numbers */
+        .tag { color: #f07178; }      /* tags */
+        .attr { color: #ffcb6b; }     /* attributes */
+
+        /* ============================================
+           INTERACTIVE CODE DEMO
+           ============================================ */
+        .demo-container {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .demo-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .demo-tab {
+            padding: 10px 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .demo-tab.active {
+            color: var(--accent-1);
+        }
+
+        .demo-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-1);
+        }
+
+        .demo-panel {
+            display: none;
+            padding: 20px;
+        }
+
+        .demo-panel.active {
+            display: block;
+        }
+
+        .demo-preview {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            min-height: 120px;
+        }
+
+        /* ============================================
+           INTERACTIVE CRUD DEMO
+           ============================================ */
+        .crud-demo {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .crud-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .crud-search {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: var(--font-sans);
+            outline: none;
+            width: 200px;
+            transition: var(--transition);
+        }
+
+        .crud-search:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+        }
+
+        .crud-search::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+        }
+
+        .btn-edit {
+            background: rgba(69, 183, 255, 0.15);
+            color: var(--accent-5);
+        }
+
+        .btn-delete {
+            background: rgba(255, 107, 157, 0.15);
+            color: var(--accent-2);
+        }
+
+        .crud-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .crud-table th {
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .crud-table td {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .crud-table tr {
+            transition: var(--transition);
+        }
+
+        .crud-table tbody tr:hover {
+            background: rgba(108, 99, 255, 0.06);
+        }
+
+        .crud-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* CRUD Modal */
+        .crud-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crud-modal-overlay.show {
+            display: flex;
+        }
+
+        .crud-modal {
+            background: rgba(20, 20, 45, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .crud-modal h3 {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font-sans);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.15);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .btn-cancel {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .btn-save {
+            background: var(--gradient-1);
+            color: white;
+            flex: 1;
+        }
+
+        /* ============================================
+           BADGES & TAGS
+           ============================================ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-purple { background: rgba(108,99,255,0.15); color: var(--accent-1); }
+        .badge-green { background: rgba(0,212,170,0.15); color: var(--accent-3); }
+        .badge-pink { background: rgba(255,107,157,0.15); color: var(--accent-2); }
+        .badge-blue { background: rgba(69,183,255,0.15); color: var(--accent-5); }
+        .badge-yellow { background: rgba(255,209,102,0.15); color: var(--accent-4); }
+
+        /* ============================================
+           SPEC CARD
+           ============================================ */
+        .spec-card {
+            text-align: center;
+            padding: 24px 16px;
+        }
+
+        .spec-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .spec-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .spec-ver {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+           TIMELINE
+           ============================================ */
+        .timeline {
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-1), var(--accent-3));
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 16px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 6px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-1);
+            border: 2px solid var(--bg-primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.3);
+        }
+
+        .timeline-item .step-num {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-item .step-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .timeline-item .step-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* ============================================
+           RELATION DIAGRAM
+           ============================================ */
+        .relation-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+
+        .entity-box {
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            min-width: 140px;
+            transition: var(--transition);
+        }
+
+        .entity-box:hover {
+            transform: translateY(-4px);
+        }
+
+        .entity-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+
+        .entity-type {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .relation-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        .relation-arrow .arrow-line {
+            font-size: 20px;
+            color: var(--accent-1);
+        }
+
+        /* ============================================
+           TEST TABLE
+           ============================================ */
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .test-table th {
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .test-table td {
+            padding: 10px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .status-pass {
+            color: var(--accent-3);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-fail {
+            color: var(--accent-2);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ============================================
+           STAGGER ANIMATIONS
+           ============================================ */
+        .stagger > * {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .slide.active .stagger > *:nth-child(1) { opacity: 1; transform: translateY(0); transition-delay: 0.1s; }
+        .slide.active .stagger > *:nth-child(2) { opacity: 1; transform: translateY(0); transition-delay: 0.2s; }
+        .slide.active .stagger > *:nth-child(3) { opacity: 1; transform: translateY(0); transition-delay: 0.3s; }
+        .slide.active .stagger > *:nth-child(4) { opacity: 1; transform: translateY(0); transition-delay: 0.4s; }
+        .slide.active .stagger > *:nth-child(5) { opacity: 1; transform: translateY(0); transition-delay: 0.5s; }
+        .slide.active .stagger > *:nth-child(6) { opacity: 1; transform: translateY(0); transition-delay: 0.6s; }
+        .slide.active .stagger > *:nth-child(7) { opacity: 1; transform: translateY(0); transition-delay: 0.7s; }
+        .slide.active .stagger > *:nth-child(8) { opacity: 1; transform: translateY(0); transition-delay: 0.8s; }
+        .slide.active .stagger > *:nth-child(9) { opacity: 1; transform: translateY(0); transition-delay: 0.9s; }
+        .slide.active .stagger > *:nth-child(10) { opacity: 1; transform: translateY(0); transition-delay: 1s; }
+
+        /* ============================================
+           MINIMAP / SLIDE OVERVIEW
+           ============================================ */
+        .slide-overview-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .slide-overview-btn:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-1);
+        }
+
+        .keyboard-hint {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 16px;
+        }
+
+        .keyboard-hint kbd {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+
+        /* ============================================
+           SLIDE OVERVIEW MODAL
+           ============================================ */
+        .overview-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 60px 40px 40px;
+            overflow-y: auto;
+        }
+
+        .overview-modal.show {
+            display: block;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .overview-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            min-height: 100px;
+        }
+
+        .overview-item:hover {
+            border-color: var(--accent-1);
+            transform: translateY(-4px);
+        }
+
+        .overview-item.current {
+            border-color: var(--accent-1);
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.3);
+        }
+
+        .overview-num {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-1);
+            margin-bottom: 8px;
+        }
+
+        .overview-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .overview-close {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            z-index: 3001;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+        }
+
+        .overview-modal.show + .overview-close,
+        .overview-close.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 768px) {
+            .slide { padding: 70px 20px 30px; }
+            .glass { padding: 24px; }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+            .nav-bar { padding: 6px 12px; gap: 8px; }
+            .keyboard-hint { display: none; }
+            .relation-diagram { flex-direction: column; }
+        }
+
+        /* ============================================
+           TOUCH SWIPE HINT
+           ============================================ */
+        @media (pointer: coarse) {
+            .keyboard-hint { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="bg-canvas">
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-orb"></div>
+    <div class="bg-grid"></div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- Navigation -->
+<nav class="nav-bar" id="navBar">
+    <span class="nav-logo">FILAMENT</span>
+    <div class="nav-divider"></div>
+    <span class="nav-slide-info" id="slideInfo">01 / 18</span>
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()" aria-label="Previous slide">◀</button>
+        <button class="nav-btn" onclick="nextSlide()" aria-label="Next slide">▶</button>
+    </div>
+</nav>
+
+<!-- Slide Overview Button -->
+<button class="slide-overview-btn" onclick="toggleOverview()" aria-label="Slide overview" title="Slide Overview (O)">⊞</button>
+
+<!-- Keyboard Hints -->
+<div class="keyboard-hint">
+    <span><kbd>←</kbd> <kbd>→</kbd> Navigasi</span>
+    <span><kbd>O</kbd> Overview</span>
+    <span><kbd>F</kbd> Fullscreen</span>
+</div>
+
+<!-- ==========================================
+     SLIDES
+     ========================================== -->
+<div class="slides-wrapper" id="slidesWrapper">
+
+    <!-- SLIDE 1: COVER -->
+    <div class="slide active" data-slide="0">
+        <div class="slide-content flex-center stagger">
+            <div class="badge badge-purple" style="margin-bottom: 24px;">Modul Praktikum Laravel 13 • Pertemuan 15</div>
+            <h1 style="max-width: 700px;">
+                Laravel <span class="gradient-text">Filament</span><br>
+                Dashboard & CRUD<br>
+                <span class="gradient-text-2">Admin Panel</span>
+            </h1>
+            <p class="subtitle" style="margin-top: 16px;">
+                Membangun Admin Panel modern untuk Sistem Informasi Akademik menggunakan Laravel Filament 4 — lengkap dengan CRUD Mahasiswa, Dosen, Mata Kuliah, dan Kelas.
+            </p>
+            <div style="display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; justify-content: center;">
+                <span class="badge badge-green">⚡ Interaktif</span>
+                <span class="badge badge-blue">📋 Step-by-Step</span>
+                <span class="badge badge-pink">🔧 Live Demo</span>
+            </div>
+            <div style="margin-top: 48px; font-size: 12px; color: var(--text-muted);">
+                Tekan <kbd style="background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); font-family: var(--font-mono);">→</kbd> untuk mulai
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: TUJUAN PEMBELAJARAN -->
+    <div class="slide" data-slide="1">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian A</div>
+            <h2>Tujuan <span class="gradient-text">Pembelajaran</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Setelah praktikum, mahasiswa mampu:</p>
+            <ul class="feature-list">
+                <li>
+                    <span class="icon icon-purple">✦</span>
+                    <span>Memahami konsep <strong style="color: var(--text-primary);">Admin Panel</strong> pada Laravel</span>
+                </li>
+                <li>
+                    <span class="icon icon-green">✦</span>
+                    <span>Menginstal dan mengonfigurasi <strong style="color: var(--text-primary);">Laravel Filament</strong></span>
+                </li>
+                <li>
+                    <span class="icon icon-pink">✦</span>
+                    <span>Membuat akun <strong style="color: var(--text-primary);">administrator</strong> Filament</span>
+                </li>
+                <li>
+                    <span class="icon icon-blue">✦</span>
+                    <span>Membuat <strong style="color: var(--text-primary);">dashboard admin</strong> dengan tampilan modern</span>
+                </li>
+                <li>
+                    <span class="icon icon-yellow">✦</span>
+                    <span>Membuat <strong style="color: var(--text-primary);">CRUD</strong> Mahasiswa, Dosen, dan Mata Kuliah</span>
+                </li>
+                <li>
+                    <span class="icon icon-purple">✦</span>
+                    <span>Membuat <strong style="color: var(--text-primary);">relasi</strong> pada Kelas Mata Kuliah</span>
+                </li>
+                <li>
+                    <span class="icon icon-green">✦</span>
+                    <span>Mengelola data akademik melalui <strong style="color: var(--text-primary);">dashboard admin</strong></span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: PRASYARAT -->
+    <div class="slide" data-slide="2">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian B</div>
+            <h2>Prasyarat <span class="gradient-text-3">Praktikum</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Pastikan praktikum sebelumnya (Pertemuan 2 & 3) telah selesai.</p>
+            <div class="grid-2">
+                <div class="glass glass-sm">
+                    <h3 style="color: var(--accent-1);">🗂️ Project & Database</h3>
+                    <ul class="feature-list">
+                        <li><span class="icon icon-purple">✓</span><span>Project Laravel</span></li>
+                        <li><span class="icon icon-purple">✓</span><span>Database akademik</span></li>
+                        <li><span class="icon icon-purple">✓</span><span>Tabel mahasiswa</span></li>
+                        <li><span class="icon icon-purple">✓</span><span>Tabel dosen</span></li>
+                        <li><span class="icon icon-purple">✓</span><span>Tabel matkul</span></li>
+                        <li><span class="icon icon-purple">✓</span><span>Tabel kelas_matkul</span></li>
+                    </ul>
+                </div>
+                <div class="glass glass-sm">
+                    <h3 style="color: var(--accent-3);">🔐 Authentication</h3>
+                    <ul class="feature-list">
+                        <li><span class="icon icon-green">✓</span><span>Laravel Breeze terinstall</span></li>
+                        <li><span class="icon icon-green">✓</span><span>Role user sudah ada</span></li>
+                        <li><span class="icon icon-green">✓</span><span>Login & dashboard berfungsi</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: SPESIFIKASI -->
+    <div class="slide" data-slide="3">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian C</div>
+            <h2>Spesifikasi <span class="gradient-text-2">Teknologi</span></h2>
+            <div class="grid-4" style="margin-top: 24px;">
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">🐘</div>
+                    <div class="spec-name">PHP</div>
+                    <div class="spec-ver">8.3</div>
+                </div>
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">🔺</div>
+                    <div class="spec-name">Laravel</div>
+                    <div class="spec-ver">13</div>
+                </div>
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">🐬</div>
+                    <div class="spec-name">MySQL</div>
+                    <div class="spec-ver">Latest</div>
+                </div>
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">📦</div>
+                    <div class="spec-name">Composer</div>
+                    <div class="spec-ver">Latest</div>
+                </div>
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">💚</div>
+                    <div class="spec-name">NodeJS</div>
+                    <div class="spec-ver">Latest</div>
+                </div>
+                <div class="glass glass-xs spec-card">
+                    <div class="spec-icon">🍃</div>
+                    <div class="spec-name">Breeze</div>
+                    <div class="spec-ver">Auth</div>
+                </div>
+                <div class="glass glass-xs spec-card" style="grid-column: span 2;">
+                    <div class="spec-icon">⚡</div>
+                    <div class="spec-name">Laravel Filament</div>
+                    <div class="spec-ver">4</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: STUDI KASUS -->
+    <div class="slide" data-slide="4">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian D</div>
+            <h2>Studi Kasus: <span class="gradient-text">SIA</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">Sistem Informasi Akademik — admin mengelola data, user lain tidak bisa akses panel admin.</p>
+            <div class="grid-2" style="margin-bottom: 20px;">
+                <div class="glass glass-sm" style="border-left: 3px solid var(--accent-3);">
+                    <h3 style="color: var(--accent-3);">✅ Admin Bisa</h3>
+                    <ul class="feature-list">
+                        <li><span class="icon icon-green">📋</span><span>Kelola Data Mahasiswa</span></li>
+                        <li><span class="icon icon-green">👨‍🏫</span><span>Kelola Data Dosen</span></li>
+                        <li><span class="icon icon-green">📚</span><span>Kelola Data Mata Kuliah</span></li>
+                        <li><span class="icon icon-green">🏫</span><span>Kelola Data Kelas Matkul</span></li>
+                    </ul>
+                </div>
+                <div class="glass glass-sm" style="border-left: 3px solid var(--accent-2);">
+                    <h3 style="color: var(--accent-2);">🚫 Non-Admin</h3>
+                    <ul class="feature-list">
+                        <li><span class="icon icon-pink">✗</span><span>Mahasiswa tidak bisa akses admin</span></li>
+                        <li><span class="icon icon-pink">✗</span><span>Dosen tidak bisa akses admin</span></li>
+                    </ul>
+                    <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+                        Akses dibatasi menggunakan <code style="color: var(--accent-1);">canAccessPanel()</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: ALOKASI WAKTU -->
+    <div class="slide" data-slide="5">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian E</div>
+            <h2>Alokasi Waktu <span class="gradient-text-3">90 Menit</span></h2>
+            <div class="timeline" style="margin-top: 24px;">
+                <div class="timeline-item">
+                    <div class="step-num">15 menit</div>
+                    <div class="step-title">Instalasi Filament</div>
+                    <div class="step-desc">Install package, panel, dan migrasi database</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">10 menit</div>
+                    <div class="step-title">Membuat Admin Panel</div>
+                    <div class="step-desc">Buat user admin & konfigurasi akses</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">15 menit</div>
+                    <div class="step-title">CRUD Mahasiswa</div>
+                    <div class="step-desc">Resource, form, dan table mahasiswa</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">10 menit</div>
+                    <div class="step-title">CRUD Dosen</div>
+                    <div class="step-desc">Resource, form, dan table dosen</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">10 menit</div>
+                    <div class="step-title">CRUD Mata Kuliah</div>
+                    <div class="step-desc">Resource, form, dan table matkul</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">20 menit</div>
+                    <div class="step-title">CRUD Kelas Matkul + Relasi</div>
+                    <div class="step-desc">Model relasi, select relationship, tabel relasi</div>
+                </div>
+                <div class="timeline-item">
+                    <div class="step-num">10 menit</div>
+                    <div class="step-title">Pengujian</div>
+                    <div class="step-desc">Test semua fitur CRUD & akses</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: APA ITU FILAMENT -->
+    <div class="slide" data-slide="6">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian F</div>
+            <h2>Apa itu <span class="gradient-text">Filament</span>?</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">
+                Package Laravel untuk membuat admin panel modern — tanpa Blade manual.
+            </p>
+            <div class="grid-3">
+                <div class="glass glass-sm" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
+                    <h3>Dashboard</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">Statistik & widget otomatis</p>
+                </div>
+                <div class="glass glass-sm" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📝</div>
+                    <h3>CRUD Otomatis</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">Form & table dari satu resource</p>
+                </div>
+                <div class="glass glass-sm" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+                    <h3>Filter & Search</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">Built-in pencarian & filter</p>
+                </div>
+            </div>
+            <div class="glass glass-sm" style="margin-top: 20px;">
+                <h3 style="color: var(--accent-3); margin-bottom: 12px;">⚡ Keuntungan Filament</h3>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <span class="badge badge-green">🚀 Cepat</span>
+                    <span class="badge badge-purple">🎨 Modern UI</span>
+                    <span class="badge badge-blue">📄 No Blade Manual</span>
+                    <span class="badge badge-pink">🔗 Relasi DB Support</span>
+                    <span class="badge badge-yellow">📊 Statistik Built-in</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: INSTALASI FILAMENT -->
+    <div class="slide" data-slide="7">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian G</div>
+            <h2>Instalasi <span class="gradient-text-2">Filament</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">3 command untuk setup Filament di project Laravel.</p>
+
+            <div class="code-block" style="margin-bottom: 16px;">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Terminal — Step 1</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="cm"># Masuk ke folder project</span>
+<span class="kw">cd</span> akademik
+
+<span class="cm"># Install Filament package</span>
+<span class="fn">composer require</span> <span class="str">filament/filament</span></code>
+                </div>
+            </div>
+
+            <div class="code-block" style="margin-bottom: 16px;">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Terminal — Step 2</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="cm"># Install panel admin</span>
+<span class="fn">php artisan</span> <span class="str">filament:install --panels</span></code>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Terminal — Step 3</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="cm"># Jalankan migrasi</span>
+<span class="fn">php artisan</span> <span class="str">migrate</span></code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: MENJALANKAN & BUAT USER ADMIN -->
+    <div class="slide" data-slide="8">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian H & I</div>
+            <h2>Jalankan & Buat <span class="gradient-text-3">Admin</span></h2>
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: var(--accent-5); margin-bottom: 12px;">🚀 Menjalankan Aplikasi</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Terminal</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="fn">php artisan</span> <span class="str">serve</span>
+
+<span class="cm"># Buka browser:</span>
+<span class="str">http://127.0.0.1:8000/admin</span></code>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-4); margin-bottom: 12px;">👤 Buat User Admin</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Terminal</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="fn">php artisan</span> <span class="str">make:filament-user</span>
+
+<span class="cm"># Isi data berikut:</span>
+<span class="prop">Name:</span>     <span class="str">Administrator</span>
+<span class="prop">Email:</span>    <span class="str">admin@kampus.ac.id</span>
+<span class="prop">Password:</span> <span class="str">admin12345</span></code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass glass-xs" style="margin-top: 20px; display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 20px;">💡</span>
+                <span style="font-size: 13px; color: var(--text-secondary);">
+                    Login ke <code style="color: var(--accent-1);">http://127.0.0.1:8000/admin</code> menggunakan email & password yang sudah dibuat.
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 10: MEMBATASI AKSES (INTERACTIVE CODE DEMO) -->
+    <div class="slide" data-slide="9">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian J</div>
+            <h2>Membatasi Akses <span class="gradient-text">Admin Only</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Implementasi <code style="color: var(--accent-1);">FilamentUser</code> interface pada model User.</p>
+
+            <div class="demo-container">
+                <div class="demo-tabs">
+                    <button class="demo-tab active" onclick="switchDemoTab(this, 'access-code')">Kode</button>
+                    <button class="demo-tab" onclick="switchDemoTab(this, 'access-demo')">Demo Interaktif</button>
+                </div>
+                <div class="demo-panel active" id="access-code">
+                    <div class="code-body">
+                        <code><span class="cm">// app/Models/User.php</span>
+
+<span class="kw">use</span> <span class="cls">Filament\Models\Contracts\FilamentUser</span>;
+<span class="kw">use</span> <span class="cls">Filament\Panel</span>;
+
+<span class="kw">class</span> <span class="cls">User</span> <span class="kw">extends</span> <span class="cls">Authenticatable</span>
+    <span class="kw">implements</span> <span class="cls">FilamentUser</span>
+{
+    <span class="kw">public function</span> <span class="fn">canAccessPanel</span>(<span class="cls">Panel</span> <span class="var">$panel</span>): <span class="cls">bool</span>
+    {
+        <span class="kw">return</span> <span class="var">$this</span><span class="op">-></span><span class="prop">role</span> <span class="op">===</span> <span class="str">'admin'</span>;
+    }
+}</code>
+                    </div>
+                </div>
+                <div class="demo-panel" id="access-demo">
+                    <div class="demo-preview">
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Simulasi login — klik user untuk test akses:</p>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn" style="background: rgba(0,212,170,0.15); color: var(--accent-3);" onclick="simulateAccess('admin', this)">
+                                👨‍💼 Admin (role: admin)
+                            </button>
+                            <button class="btn" style="background: rgba(255,107,157,0.15); color: var(--accent-2);" onclick="simulateAccess('dosen', this)">
+                                👨‍🏫 Dosen (role: dosen)
+                            </button>
+                            <button class="btn" style="background: rgba(255,107,157,0.15); color: var(--accent-2);" onclick="simulateAccess('mahasiswa', this)">
+                                🎓 Mahasiswa (role: mahasiswa)
+                            </button>
+                        </div>
+                        <div id="accessResult" style="margin-top: 16px; padding: 12px; border-radius: 8px; display: none; font-size: 13px; font-weight: 600;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 11: CRUD MAHASISWA -->
+    <div class="slide" data-slide="10">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian K</div>
+            <h2>CRUD <span class="gradient-text-2">Mahasiswa</span></h2>
+
+            <div class="code-block" style="margin-bottom: 16px;">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Terminal — Generate Resource</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="fn">php artisan</span> <span class="str">make:filament-resource Mahasiswa</span></code>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <h3 style="color: var(--accent-3); margin-bottom: 10px;">📝 Form Schema</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">MahasiswaResource.php</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'nim'</span>)
+    -><span class="fn">required</span>()
+    -><span class="fn">unique</span>(),
+
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'nama'</span>)
+    -><span class="fn">required</span>(),
+
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'prodi'</span>)
+    -><span class="fn">required</span>(),</code>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="color: var(--accent-5); margin-bottom: 10px;">📊 Table Columns</h3>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">MahasiswaResource.php</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'nim'</span>)
+    -><span class="fn">searchable</span>(),
+
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'nama'</span>)
+    -><span class="fn">searchable</span>(),
+
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'prodi'</span>),</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 12: DEMO CRUD MAHASISWA (INTERACTIVE) -->
+    <div class="slide" data-slide="11">
+        <div class="slide-content stagger">
+            <div class="slide-label">Demo Interaktif</div>
+            <h2>Live CRUD <span class="gradient-text">Mahasiswa</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 16px;">Simulasi operasi CRUD — tambah, edit, hapus, cari data mahasiswa.</p>
+
+            <div class="crud-demo">
+                <div class="crud-toolbar">
+                    <input type="text" class="crud-search" placeholder="🔍 Cari mahasiswa..." id="mhsSearch" oninput="filterMhs()">
+                    <button class="btn btn-primary" onclick="openMhsModal('add')">+ Tambah</button>
+                </div>
+                <table class="crud-table">
+                    <thead>
+                        <tr>
+                            <th>NIM</th>
+                            <th>Nama</th>
+                            <th>Prodi</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mhsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 13: CRUD DOSEN & MATKUL -->
+    <div class="slide" data-slide="12">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian L & M</div>
+            <h2>CRUD <span class="gradient-text-3">Dosen</span> & <span class="gradient-text-2">Mata Kuliah</span></h2>
+            <div class="grid-2">
+                <div>
+                    <div class="code-block" style="margin-bottom: 12px;">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Dosen Resource</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="cm">// Form</span>
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'nidn'</span>)
+    -><span class="fn">required</span>(),
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'nama'</span>)
+    -><span class="fn">required</span>(),
+
+<span class="cm">// Table</span>
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'nidn'</span>),
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'nama'</span>),</code>
+                        </div>
+                    </div>
+                    <div class="glass glass-xs" style="text-align:center;">
+                        <code style="color: var(--accent-1); font-size: 12px;">php artisan make:filament-resource Dosen</code>
+                    </div>
+                </div>
+                <div>
+                    <div class="code-block" style="margin-bottom: 12px;">
+                        <div class="code-header">
+                            <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                            <span class="code-lang">Matkul Resource</span>
+                        </div>
+                        <div class="code-body">
+                            <code><span class="cm">// Form</span>
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'kode_matkul'</span>),
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'nama_matkul'</span>),
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'sks'</span>)
+    -><span class="fn">numeric</span>(),
+
+<span class="cm">// Table</span>
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'kode_matkul'</span>),
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'nama_matkul'</span>),
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(<span class="str">'sks'</span>),</code>
+                        </div>
+                    </div>
+                    <div class="glass glass-xs" style="text-align:center;">
+                        <code style="color: var(--accent-1); font-size: 12px;">php artisan make:filament-resource Matkul</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 14: RELASI MODEL -->
+    <div class="slide" data-slide="13">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian N</div>
+            <h2>Relasi <span class="gradient-text">Model</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Eloquent relationships antar model.</p>
+
+            <div class="glass glass-sm" style="margin-bottom: 20px;">
+                <div class="relation-diagram">
+                    <div class="entity-box" style="background: rgba(108,99,255,0.15); border: 1px solid rgba(108,99,255,0.3);">
+                        <div class="entity-name" style="color: var(--accent-1);">Dosen</div>
+                        <div class="entity-type">hasMany</div>
+                    </div>
+                    <div class="relation-arrow">
+                        <span class="arrow-line">⟶</span>
+                        <span>1 : N</span>
+                    </div>
+                    <div class="entity-box" style="background: rgba(255,209,102,0.15); border: 1px solid rgba(255,209,102,0.3);">
+                        <div class="entity-name" style="color: var(--accent-4);">KelasMatkul</div>
+                        <div class="entity-type">belongsTo</div>
+                    </div>
+                    <div class="relation-arrow">
+                        <span class="arrow-line">⟵</span>
+                        <span>N : 1</span>
+                    </div>
+                    <div class="entity-box" style="background: rgba(0,212,170,0.15); border: 1px solid rgba(0,212,170,0.3);">
+                        <div class="entity-name" style="color: var(--accent-3);">Matkul</div>
+                        <div class="entity-type">hasMany</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-3">
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                        <span class="code-lang">Model Dosen</span>
+                    </div>
+                    <div class="code-body">
+                        <code><span class="kw">public function</span> <span class="fn">kelas</span>()
+{
+    <span class="kw">return</span> <span class="var">$this</span>
+      -><span class="fn">hasMany</span>(
+        <span class="cls">KelasMatkul</span>::<span class="kw">class</span>
+      );
+}</code>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                        <span class="code-lang">Model KelasMatkul</span>
+                    </div>
+                    <div class="code-body">
+                        <code><span class="kw">public function</span> <span class="fn">dosen</span>()
+{
+    <span class="kw">return</span> <span class="var">$this</span>
+      -><span class="fn">belongsTo</span>(
+        <span class="cls">Dosen</span>::<span class="kw">class</span>
+      );
+}
+
+<span class="kw">public function</span> <span class="fn">matkul</span>()
+{
+    <span class="kw">return</span> <span class="var">$this</span>
+      -><span class="fn">belongsTo</span>(
+        <span class="cls">Matkul</span>::<span class="kw">class</span>
+      );
+}</code>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                        <span class="code-lang">Model Matkul</span>
+                    </div>
+                    <div class="code-body">
+                        <code><span class="kw">public function</span> <span class="fn">kelas</span>()
+{
+    <span class="kw">return</span> <span class="var">$this</span>
+      -><span class="fn">hasMany</span>(
+        <span class="cls">KelasMatkul</span>::<span class="kw">class</span>
+      );
+}</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 15: RESOURCE KELAS MATKUL -->
+    <div class="slide" data-slide="14">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian O</div>
+            <h2>Resource <span class="gradient-text-2">Kelas Matkul</span></h2>
+
+            <div class="code-block" style="margin-bottom: 16px;">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Terminal</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="fn">php artisan</span> <span class="str">make:filament-resource KelasMatkul</span></code>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                        <span class="code-lang">Form — Select Relasi</span>
+                    </div>
+                    <div class="code-body">
+                        <code><span class="cls">Select</span>::<span class="fn">make</span>(<span class="str">'dosen_id'</span>)
+    -><span class="fn">relationship</span>(<span class="str">'dosen'</span>, <span class="str">'nama'</span>)
+    -><span class="fn">required</span>(),
+
+<span class="cls">Select</span>::<span class="fn">make</span>(<span class="str">'matkul_id'</span>)
+    -><span class="fn">relationship</span>(<span class="str">'matkul'</span>, <span class="str">'nama_matkul'</span>)
+    -><span class="fn">required</span>(),
+
+<span class="cls">TextInput</span>::<span class="fn">make</span>(<span class="str">'kelas'</span>)
+    -><span class="fn">required</span>(),</code>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                        <span class="code-lang">Table — Relasi Column</span>
+                    </div>
+                    <div class="code-body">
+                        <code><span class="cls">TextColumn</span>::<span class="fn">make</span>(
+    <span class="str">'dosen.nama'</span>
+),
+
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(
+    <span class="str">'matkul.nama_matkul'</span>
+),
+
+<span class="cls">TextColumn</span>::<span class="fn">make</span>(
+    <span class="str">'kelas'</span>
+),</code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass glass-xs" style="margin-top: 16px;">
+                <p style="font-size: 13px; color: var(--text-secondary);">
+                    💡 <strong style="color: var(--accent-1);">relationship()</strong> otomatis membuat dropdown select dari data relasi — tidak perlu query manual!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 16: NAVIGATION ICONS -->
+    <div class="slide" data-slide="15">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian P</div>
+            <h2>Navigation <span class="gradient-text-3">Icons</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Tambahkan icon Heroicons pada menu navigasi dashboard.</p>
+
+            <div class="code-block" style="margin-bottom: 20px;">
+                <div class="code-header">
+                    <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+                    <span class="code-lang">Resource File</span>
+                </div>
+                <div class="code-body">
+                    <code><span class="kw">protected static</span> ?<span class="cls">string</span> <span class="var">$navigationIcon</span> =
+    <span class="str">'heroicon-o-academic-cap'</span>;</code>
+                </div>
+            </div>
+
+            <div class="grid-4">
+                <div class="glass glass-xs" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">👤</div>
+                    <div style="font-size: 13px; font-weight: 600;">Mahasiswa</div>
+                    <code style="font-size: 10px; color: var(--accent-1);">heroicon-o-user</code>
+                </div>
+                <div class="glass glass-xs" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">👨‍🏫</div>
+                    <div style="font-size: 13px; font-weight: 600;">Dosen</div>
+                    <code style="font-size: 10px; color: var(--accent-3);">heroicon-o-user</code>
+                </div>
+                <div class="glass glass-xs" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">📖</div>
+                    <div style="font-size: 13px; font-weight: 600;">Matkul</div>
+                    <code style="font-size: 10px; color: var(--accent-2);">heroicon-o-book-open</code>
+                </div>
+                <div class="glass glass-xs" style="text-align: center;">
+                    <div style="font-size: 32px; margin-bottom: 8px;">🏫</div>
+                    <div style="font-size: 13px; font-weight: 600;">Kelas</div>
+                    <code style="font-size: 10px; color: var(--accent-4);">heroicon-o-building-library</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 17: HASIL PENGUJIAN -->
+    <div class="slide" data-slide="16">
+        <div class="slide-content stagger">
+            <div class="slide-label">Bagian Q & R</div>
+            <h2>Hasil <span class="gradient-text">Pengujian</span></h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Semua fitur telah diuji dan berjalan dengan baik.</p>
+
+            <div class="glass glass-sm" style="overflow-x: auto;">
+                <table class="test-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Pengujian</th>
+                            <th>Hasil</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>1</td><td>Login admin</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>2</td><td>Login dosen ke admin panel</td><td><span class="status-fail">✗ Ditolak</span></td></tr>
+                        <tr><td>3</td><td>Tambah mahasiswa</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>4</td><td>Edit mahasiswa</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>5</td><td>Hapus mahasiswa</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>6</td><td>Tambah dosen</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>7</td><td>Tambah mata kuliah</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>8</td><td>Tambah kelas matkul</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                        <tr><td>9</td><td>Relasi dosen & matkul tampil</td><td><span class="status-pass">✓ Berhasil</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="glass glass-xs" style="margin-top: 16px; border-left: 3px solid var(--accent-3);">
+                <p style="font-size: 13px; color: var(--text-secondary);">
+                    ✅ <strong style="color: var(--accent-3);">Test #2 = expected behavior</strong> — dosen ditolak masuk admin panel karena <code style="color: var(--accent-1);">canAccessPanel()</code> cek role === 'admin'.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 18: RECAP & BONUS -->
+    <div class="slide" data-slide="17">
+        <div class="slide-content stagger">
+            <div class="slide-label">Rangkuman</div>
+            <h2>Recap & <span class="gradient-text-2">Key Takeaways</span></h2>
+
+            <div class="grid-3" style="margin-bottom: 20px;">
+                <div class="glass glass-sm" style="text-align: center; border-top: 3px solid var(--accent-1);">
+                    <div style="font-size: 28px; margin-bottom: 8px;">📦</div>
+                    <h3 style="font-size: 14px;">Install</h3>
+                    <p style="font-size: 12px; color: var(--text-muted);">composer require + artisan install</p>
+                </div>
+                <div class="glass glass-sm" style="text-align: center; border-top: 3px solid var(--accent-3);">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🔐</div>
+                    <h3 style="font-size: 14px;">Access Control</h3>
+                    <p style="font-size: 12px; color: var(--text-muted);">FilamentUser + canAccessPanel()</p>
+                </div>
+                <div class="glass glass-sm" style="text-align: center; border-top: 3px solid var(--accent-2);">
+                    <div style="font-size: 28px; margin-bottom: 8px;">⚡</div>
+                    <h3 style="font-size: 14px;">CRUD Resource</h3>
+                    <p style="font-size: 12px; color: var(--text-muted);">make:filament-resource → Form + Table</p>
+                </div>
+            </div>
+
+            <div class="glass glass-sm" style="border-left: 3px solid var(--accent-4);">
+                <h3 style="color: var(--accent-4); margin-bottom: 12px;">🔑 Perintah Kunci</h3>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 13px;">
+                    <code style="color: var(--accent-1);">composer require filament/filament</code>
+                    <span style="color: var(--text-muted);">Install package</span>
+                    <code style="color: var(--accent-1);">php artisan filament:install --panels</code>
+                    <span style="color: var(--text-muted);">Install panel</span>
+                    <code style="color: var(--accent-1);">php artisan make:filament-user</code>
+                    <span style="color: var(--text-muted);">Buat admin</span>
+                    <code style="color: var(--accent-1);">php artisan make:filament-resource</code>
+                    <span style="color: var(--text-muted);">Buat CRUD</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 32px;">
+                <p style="font-size: 20px; font-weight: 700;">
+                    <span class="gradient-text">Terima Kasih!</span>
+                </p>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">
+                    Ada pertanyaan? 🤔
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- CRUD Modal -->
+<div class="crud-modal-overlay" id="mhsModalOverlay" onclick="if(event.target===this) closeMhsModal()">
+    <div class="crud-modal">
+        <h3 id="mhsModalTitle">Tambah Mahasiswa</h3>
+        <div class="form-group">
+            <label>NIM</label>
+            <input type="text" id="mhsNim" placeholder="Contoh: 2024001">
+        </div>
+        <div class="form-group">
+            <label>Nama</label>
+            <input type="text" id="mhsNama" placeholder="Nama lengkap">
+        </div>
+        <div class="form-group">
+            <label>Prodi</label>
+            <input type="text" id="mhsProdi" placeholder="Program studi">
+        </div>
+        <input type="hidden" id="mhsEditIdx" value="-1">
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeMhsModal()">Batal</button>
+            <button class="btn btn-save" onclick="saveMhs()">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Slide Overview Modal -->
+<div class="overview-modal" id="overviewModal">
+    <button class="overview-close" id="overviewCloseBtn" onclick="toggleOverview()">✕</button>
+    <div class="overview-grid" id="overviewGrid"></div>
+</div>
+
+<script>
+    // ============================================
+    // SLIDE ENGINE
+    // ============================================
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+    let isAnimating = false;
+
+    function updateSlide(direction = 'next') {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        slides.forEach((s, i) => {
+            s.classList.remove('active', 'exit-left');
+            if (direction === 'next' && i === currentSlide - 1) {
+                // don't add exit-left for previous
+            }
+        });
+
+        slides[currentSlide].classList.add('active');
+
+        // Update progress
+        const progress = ((currentSlide + 1) / totalSlides) * 100;
+        document.getElementById('progressBar').style.width = progress + '%';
+
+        // Update slide info
+        const num = String(currentSlide + 1).padStart(2, '0');
+        const total = String(totalSlides).padStart(2, '0');
+        document.getElementById('slideInfo').textContent = `${num} / ${total}`;
+
+        // Reset scroll
+        const content = slides[currentSlide].querySelector('.slide-content');
+        if (content) content.scrollTop = 0;
+
+        setTimeout(() => { isAnimating = false; }, 600);
+    }
+
+    function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+            currentSlide++;
+            updateSlide('next');
+        }
+    }
+
+    function prevSlide() {
+        if (currentSlide > 0) {
+            currentSlide--;
+            updateSlide('prev');
+        }
+    }
+
+    function goToSlide(idx) {
+        currentSlide = idx;
+        updateSlide();
+        const modal = document.getElementById('overviewModal');
+        if (modal.classList.contains('show')) toggleOverview();
+    }
+
+    // Keyboard nav
+    document.addEventListener('keydown', (e) => {
+        if (document.getElementById('overviewModal').classList.contains('show')) {
+            if (e.key === 'Escape' || e.key === 'o' || e.key === 'O') toggleOverview();
+            return;
+        }
+        if (document.getElementById('mhsModalOverlay').classList.contains('show')) {
+            if (e.key === 'Escape') closeMhsModal();
+            return;
+        }
+        switch(e.key) {
+            case 'ArrowRight':
+            case 'ArrowDown':
+            case ' ':
+                e.preventDefault();
+                nextSlide();
+                break;
+            case 'ArrowLeft':
+            case 'ArrowUp':
+                e.preventDefault();
+                prevSlide();
+                break;
+            case 'Home':
+                e.preventDefault();
+                currentSlide = 0;
+                updateSlide();
+                break;
+            case 'End':
+                e.preventDefault();
+                currentSlide = totalSlides - 1;
+                updateSlide();
+                break;
+            case 'o':
+            case 'O':
+                toggleOverview();
+                break;
+            case 'f':
+            case 'F':
+                toggleFullscreen();
+                break;
+        }
+    });
+
+    // Touch swipe
+    let touchStartX = 0;
+    let touchStartY = 0;
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    });
+    document.addEventListener('touchend', (e) => {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+            if (dx < 0) nextSlide();
+            else prevSlide();
+        }
+    });
+
+    // Fullscreen
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    }
+
+    // ============================================
+    // SLIDE OVERVIEW
+    // ============================================
+    const slideTitles = [
+        'Cover — Laravel Filament',
+        'Tujuan Pembelajaran',
+        'Prasyarat Praktikum',
+        'Spesifikasi Teknologi',
+        'Studi Kasus: SIA',
+        'Alokasi Waktu 90 Menit',
+        'Apa itu Filament?',
+        'Instalasi Filament',
+        'Jalankan & Buat Admin',
+        'Membatasi Akses Admin',
+        'CRUD Mahasiswa — Kode',
+        'CRUD Mahasiswa — Live Demo',
+        'CRUD Dosen & Mata Kuliah',
+        'Relasi Model',
+        'Resource Kelas Matkul',
+        'Navigation Icons',
+        'Hasil Pengujian',
+        'Recap & Key Takeaways'
+    ];
+
+    function buildOverview() {
+        const grid = document.getElementById('overviewGrid');
+        grid.innerHTML = '';
+        slideTitles.forEach((title, i) => {
+            const item = document.createElement('div');
+            item.className = 'overview-item' + (i === currentSlide ? ' current' : '');
+            item.innerHTML = `<div class="overview-num">Slide ${i + 1}</div><div class="overview-title">${title}</div>`;
+            item.onclick = () => goToSlide(i);
+            grid.appendChild(item);
+        });
+    }
+
+    function toggleOverview() {
+        const modal = document.getElementById('overviewModal');
+        const closeBtn = document.getElementById('overviewCloseBtn');
+        if (modal.classList.contains('show')) {
+            modal.classList.remove('show');
+            closeBtn.classList.remove('show');
+        } else {
+            buildOverview();
+            modal.classList.add('show');
+            closeBtn.classList.add('show');
+        }
+    }
+
+    // ============================================
+    // INTERACTIVE: ACCESS DEMO
+    // ============================================
+    function simulateAccess(role, btn) {
+        const result = document.getElementById('accessResult');
+        result.style.display = 'block';
+
+        if (role === 'admin') {
+            result.style.background = 'rgba(0, 212, 170, 0.15)';
+            result.style.color = '#00d4aa';
+            result.style.border = '1px solid rgba(0, 212, 170, 0.3)';
+            result.innerHTML = '✅ Akses DITERIMA — role === "admin" → canAccessPanel() return true';
+        } else {
+            result.style.background = 'rgba(255, 107, 157, 0.15)';
+            result.style.color = '#ff6b9d';
+            result.style.border = '1px solid rgba(255, 107, 157, 0.3)';
+            result.innerHTML = `🚫 Akses DITOLAK — role === "${role}" → canAccessPanel() return false`;
+        }
+
+        result.style.animation = 'none';
+        result.offsetHeight;
+        result.style.animation = 'modalIn 0.3s ease';
+    }
+
+    // ============================================
+    // INTERACTIVE: DEMO TABS
+    // ============================================
+    function switchDemoTab(btn, panelId) {
+        const container = btn.closest('.demo-container');
+        container.querySelectorAll('.demo-tab').forEach(t => t.classList.remove('active'));
+        container.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(panelId).classList.add('active');
+    }
+
+    // ============================================
+    // INTERACTIVE: CRUD MAHASISWA DEMO
+    // ============================================
+    let mahasiswaData = [
+        { nim: '2024001', nama: 'Ahmad Fauzi', prodi: 'Teknik Informatika' },
+        { nim: '2024002', nama: 'Siti Nurhaliza', prodi: 'Sistem Informasi' },
+        { nim: '2024003', nama: 'Budi Santoso', prodi: 'Teknik Informatika' },
+        { nim: '2024004', nama: 'Dewi Lestari', prodi: 'Ilmu Komputer' },
+    ];
+
+    function renderMhsTable(data) {
+        const tbody = document.getElementById('mhsTableBody');
+        if (!data) data = mahasiswaData;
+        tbody.innerHTML = data.map((m, i) => `
+            <tr>
+                <td><code style="color: var(--accent-1); font-size: 12px;">${m.nim}</code></td>
+                <td>${m.nama}</td>
+                <td><span class="badge badge-purple">${m.prodi}</span></td>
+                <td>
+                    <div class="crud-actions">
+                        <button class="btn btn-sm btn-edit" onclick="openMhsModal('edit', ${mahasiswaData.indexOf(m)})">✏️</button>
+                        <button class="btn btn-sm btn-delete" onclick="deleteMhs(${mahasiswaData.indexOf(m)})">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function filterMhs() {
+        const q = document.getElementById('mhsSearch').value.toLowerCase();
+        const filtered = mahasiswaData.filter(m =>
+            m.nim.includes(q) || m.nama.toLowerCase().includes(q) || m.prodi.toLowerCase().includes(q)
+        );
+        renderMhsTable(filtered);
+    }
+
+    function openMhsModal(mode, idx) {
+        const overlay = document.getElementById('mhsModalOverlay');
+        overlay.classList.add('show');
+        document.getElementById('mhsEditIdx').value = idx !== undefined ? idx : -1;
+
+        if (mode === 'edit') {
+            document.getElementById('mhsModalTitle').textContent = 'Edit Mahasiswa';
+            document.getElementById('mhsNim').value = mahasiswaData[idx].nim;
+            document.getElementById('mhsNama').value = mahasiswaData[idx].nama;
+            document.getElementById('mhsProdi').value = mahasiswaData[idx].prodi;
+        } else {
+            document.getElementById('mhsModalTitle').textContent = 'Tambah Mahasiswa';
+            document.getElementById('mhsNim').value = '';
+            document.getElementById('mhsNama').value = '';
+            document.getElementById('mhsProdi').value = '';
+        }
+    }
+
+    function closeMhsModal() {
+        document.getElementById('mhsModalOverlay').classList.remove('show');
+    }
+
+    function saveMhs() {
+        const nim = document.getElementById('mhsNim').value.trim();
+        const nama = document.getElementById('mhsNama').value.trim();
+        const prodi = document.getElementById('mhsProdi').value.trim();
+        if (!nim || !nama || !prodi) return;
+
+        const idx = parseInt(document.getElementById('mhsEditIdx').value);
+        if (idx >= 0) {
+            mahasiswaData[idx] = { nim, nama, prodi };
+        } else {
+            mahasiswaData.push({ nim, nama, prodi });
+        }
+        renderMhsTable();
+        closeMhsModal();
+    }
+
+    function deleteMhs(idx) {
+        mahasiswaData.splice(idx, 1);
+        renderMhsTable();
+    }
+
+    // Init
+    renderMhsTable();
+    updateSlide();
+</script>
+
+</body>
+</html>
